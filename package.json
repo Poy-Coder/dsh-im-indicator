@@ -1,0 +1,36 @@
+{
+  "name": "dsh-im-indicator",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Lightweight IM channel indicator for the DSH session list: a capsule on the one Session each channel is driving, plus a live status dot. Zero runtime dependencies.",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/Poy-Coder/dsh-im-indicator.git" },
+  "homepage": "https://github.com/Poy-Coder/dsh-im-indicator#readme",
+  "bugs": { "url": "https://github.com/Poy-Coder/dsh-im-indicator/issues" },
+  "keywords": ["dsh", "deepseek-harness", "plugin", "im", "feishu", "wechat", "indicator", "sidebar"],
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.mjs",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "test/verify.mjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web" }
+  },
+  "engines": {
+    "node": ">=20.18.1"
+  },
+  "scripts": {
+    "test": "node --test test/verify.mjs"
+  }
+}
