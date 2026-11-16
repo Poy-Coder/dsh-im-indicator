@@ -2,7 +2,7 @@
 
 **给 DSH 会话列表加一个极简的 IM 通道指示器：哪个会话正被飞书/微信驱动、它现在在回答还是已完成。**
 
-- 一行胶囊 + 一个圆点，就这两样东西
+- 胶囊只出现在**通道当前绑定的那一条**会话上；状态点对**所有会话**生效（桌面端直接对话也会绿/橙）
 - 🟢 绿色呼吸 = 正在回答；🟠 橙色 = 有未读回复；空闲 = 什么都不显示
 - 标的是**通道当前绑定的那一条**，不是整个工作区
 
@@ -21,8 +21,8 @@
 
 ## 配合谁使用
 
-- [`dsh-channel-feishu`](https://www.npmjs.com/package/dsh-channel-feishu)
-- [`dsh-channel-wechat-ilink`](https://www.npmjs.com/package/dsh-channel-wechat-ilink)
+- 飞书通道 [`dsh-channel-feishu`](https://github.com/Poy-Coder/dsh-channel-feishu)（npm 同名）
+- 微信通道 [`dsh-channel-wechat-ilink`](https://github.com/Poy-Coder/dsh-channel-wechat-ilink)（npm 同名）
 
 两个都装也可以，胶囊按各自的绑定会话区分。
 

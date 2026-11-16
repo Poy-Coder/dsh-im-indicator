@@ -1,8 +1,8 @@
 {
   "name": "dsh-im-indicator",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
-  "description": "Lightweight IM channel indicator for the DSH session list: a capsule on the one Session each channel is driving, plus a live status dot. Zero runtime dependencies.",
+  "description": "Lightweight DSH session-list indicator: a channel capsule on the Session each IM channel is driving, plus a running/unread dot for every Session. Zero runtime dependencies.",
   "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/Poy-Coder/dsh-im-indicator.git" },
   "homepage": "https://github.com/Poy-Coder/dsh-im-indicator#readme",
