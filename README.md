@@ -52,6 +52,17 @@ GET /im-indicator/bound
 
 页面每 5 秒拉一次，只在 id 变化时重绘。
 
+## 鉴权
+
+`webServer` 的具名路由在任何 Host/Origin 检查之前应答，所以这条路由**自己**调用 DSH 的 `ctx.connection.requestRejection({ headers })`：
+
+| 情况 | 结果 |
+|---|---|
+| 请求通过 DSH 的 Host/Origin 与浏览器登录检查 | `200` + 载荷 |
+| 检查拒绝（跨站 Origin、非法 Host、无有效会话） | `401`/`403`，**空响应体，不含任何会话 id** |
+| 检查本身抛错 | `403`（失败关闭，宁可空白也不泄露） |
+| 运行环境没有 `connection` 服务 | 正常返回（该环境没有浏览器载体可鉴权） |
+
 ## 稳定性
 
 | 风险 | 处理 |

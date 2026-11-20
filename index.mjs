@@ -10,7 +10,12 @@
  *   - the route body is read fresh per request and never cached;
  *   - a missing, unreadable, or malformed state file yields an empty id, never
  *     an exception (a broken channel plugin must not break the indicator);
- *   - the plugin waits for `webServer` through `inject` instead of assuming it.
+ *   - the plugin waits for `webServer` through `inject` instead of assuming it;
+ *   - the route authenticates every request: `webServer` named routes answer
+ *     before any trust check, so without `connection.requestRejection` a foreign
+ *     Origin or Host would read the payload. A check that itself fails returns
+ *     403 rather than the data, because leaking a Session id is worse than a
+ *     blank indicator.
  */
 import { readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
@@ -23,6 +28,9 @@ export const CHANNEL_STATE_FILES = {
   feishu: 'feishu-channel-state.json',
   wechat: 'wechat-channel-state.json',
 }
+
+/** The one route this plugin owns; also the client's polling target. */
+export const ROUTE_PATH = '/im-indicator/bound'
 
 export const dshHome = () => process.env.DSH_HOME || join(homedir(), '.dsh')
 
@@ -61,15 +69,53 @@ export function boundPayload() {
   return { v: 1, bound, at: Date.now() }
 }
 
+const NO_STORE = { 'cache-control': 'no-store' }
+
+/**
+ * Run Connection's Host/Origin and browser-authentication checks for this route.
+ * @param {unknown} connection the `connection` Service, when the profile has one
+ * @param {Request} request the incoming request
+ * @returns {401 | 403 | undefined} a rejection status, or undefined to proceed
+ */
+export function connectionRejection(connection, request) {
+  const check = connection?.requestRejection
+  // A profile without Connection serves no browser at all; there is nothing to
+  // authenticate against, and the carrier is loopback-only in that case.
+  if (typeof check !== 'function') return undefined
+  try {
+    return check.call(connection, { headers: request?.headers ?? {} }) ?? undefined
+  } catch {
+    // An authentication check that throws must not fall through to the payload.
+    return 403
+  }
+}
+
+/**
+ * Answer one request for the route.
+ * @param {unknown} connection the `connection` Service, when the profile has one
+ * @param {Request} request the incoming request
+ * @returns {Promise<Response>}
+ */
+export async function boundResponse(connection, request) {
+  const rejection = connectionRejection(connection, request)
+  if (rejection) return new Response(null, { status: rejection, headers: NO_STORE })
+  return new Response(JSON.stringify(boundPayload()), {
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+      // The payload names Sessions in this profile; never hand it to a page
+      // served from another origin even if a browser is asked to.
+      'x-content-type-options': 'nosniff',
+    },
+  })
+}
+
 export function apply(ctx) {
+  // `connection` stays optional: the indicator is a Web decoration, and a
+  // profile without a browser carrier has no trust checks to apply.
   ctx.effect(() => ctx.webServer.register({
     kind: 'exact',
-    path: '/im-indicator/bound',
-    resource: async () => new Response(JSON.stringify(boundPayload()), {
-      headers: {
-        'content-type': 'application/json; charset=utf-8',
-        'cache-control': 'no-store',
-      },
-    }),
+    path: ROUTE_PATH,
+    resource: async (request) => boundResponse(ctx.get('connection'), request),
   }), 'dsh-im-indicator: bound session route')
 }

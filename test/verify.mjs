@@ -8,7 +8,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-import { boundPayload, boundSessionOf, CHANNEL_STATE_FILES } from '../index.mjs'
+import { boundPayload, boundResponse, boundSessionOf, connectionRejection, CHANNEL_STATE_FILES } from '../index.mjs'
 
 test('boundSessionOf accepts a well-formed binding', () => {
   assert.equal(boundSessionOf({ sessionId: 'session-1234' }), 'session-1234')
@@ -51,4 +51,37 @@ test('boundPayload ignores a malformed state file', () => {
     if (previous === undefined) delete process.env.DSH_HOME
     else process.env.DSH_HOME = previous
   }
+})
+
+const request = () => new Request('http://127.0.0.1:3080/im-indicator/bound', {
+  headers: { origin: 'http://127.0.0.1:3080' },
+})
+
+test('a rejected request never reaches the payload', async () => {
+  const connection = { requestRejection: () => 403 }
+  assert.equal(connectionRejection(connection, request()), 403)
+  const response = await boundResponse(connection, request())
+  assert.equal(response.status, 403)
+  assert.equal(await response.text(), '')
+})
+
+test('an accepted request returns the payload', async () => {
+  const connection = { requestRejection: () => undefined }
+  const response = await boundResponse(connection, request())
+  assert.equal(response.status, 200)
+  assert.equal(response.headers.get('cache-control'), 'no-store')
+  assert.equal((await response.json()).v, 1)
+})
+
+test('a throwing trust check fails closed', async () => {
+  const connection = { requestRejection: () => { throw new Error('boom') } }
+  assert.equal(connectionRejection(connection, request()), 403)
+  assert.equal((await boundResponse(connection, request())).status, 403)
+})
+
+test('a profile without Connection still serves the payload', async () => {
+  // No Connection Service means no browser carrier to authenticate; the route
+  // must keep working rather than deny every request.
+  assert.equal(connectionRejection(undefined, request()), undefined)
+  assert.equal((await boundResponse(undefined, request())).status, 200)
 })
