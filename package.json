@@ -1,6 +1,6 @@
 {
   "name": "dsh-im-indicator",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "type": "module",
   "description": "Lightweight DSH session-list indicator: a channel capsule on the Session each IM channel is driving, plus a running/unread dot for every Session. Zero runtime dependencies.",
   "license": "MIT",

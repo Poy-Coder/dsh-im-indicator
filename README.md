@@ -85,3 +85,17 @@ node --test test/verify.mjs
 - 依赖通道状态文件的 `sessionId` 字段，字段改名需要同步更新；
 - 只认 `feishu` / `wechat`，新增通道需要加一行映射；
 - 圆点来自 DSH 的会话状态，不代表“通道连接是否健康”（这一层可以后续再加）。
+
+## 遇到问题
+
+胶囊不显示、圆点不出现、或者想加别的通道：直接开 issue <https://github.com/Poy-Coder/dsh-im-indicator/issues>。
+
+排查前可以先用命令行确认宿主半边活着：
+
+```bash
+curl http://127.0.0.1:<DSH 端口>/im-indicator/bound
+```
+
+- 返回 `{"v":1,"bound":{...}}` → 宿主正常，问题在页面；
+- 返回 401/403 → 这是正常鉴权（浏览器里带 cookie 才放行）；
+- 连不上 → 插件没加载或没重启。
